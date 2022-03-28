@@ -1,7 +1,9 @@
 import scala.collection.mutable.ArrayBuffer
 
-object HelloWorld {
-  def main(args: Array[String]): Unit = {
-    println("test")
+object HelloWorld extends App{
+
+  def printStr(str: String): Unit = {
+
+    println(str)
   }
 }
