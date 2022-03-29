@@ -2,6 +2,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import scala.Console._
 import queries._
+import CRUD._
 
 
 object main extends App {
@@ -23,34 +24,27 @@ object main extends App {
   spark.sql("set hive.enforce.bucketing = true")
   //</editor-fold>
 
-  //<editor-fold desc="steamdata table creation">
+  //<editor-fold desc="steamData and userAccounts table creation">
 
   //spark.sql("DROP TABLE IF EXISTS steamData")
-  val df = spark.sql("create table IF NOT EXISTS steamData(month_year STRING, Avg_Players FLOAT, gain FLOAT, percent_gain STRING, Peak_Players INT, url STRING, date DATE, name STRING) " +
+  val dfSteam = spark.sql("create table IF NOT EXISTS steamData(month_year STRING, Avg_Players FLOAT, gain FLOAT, percent_gain STRING, Peak_Players INT, url STRING, date DATE, name STRING) " +
     "row format delimited fields terminated by ','")
-  df.write.partitionBy("name")
-  df.write.bucketBy(10, "month_year")
+  dfSteam.write.partitionBy("name")
+  dfSteam.write.bucketBy(10, "month_year")
   //spark.sql("LOAD DATA LOCAL INPATH 'Valve_Player_Data.csv' INTO TABLE steamData")
+
+  spark.sql("DROP TABLE IF EXISTS userAccounts")
+  spark.sql("DROP TABLE IF EXISTS usersTemp")
+  val dfAccounts = spark.sql("create table IF NOT EXISTS userAccounts(username STRING, password STRING, permissionType STRING) " +
+    "stored as orc")
 
   //</editor-fold>
 
-  println(s"${BOLD}Welcome to the Steam Player Data Analyzer, where the top 100 Steam Games from 2012-2021 are queried!$RESET\n\n")
-  var isAdmin = false; var isBasic = false
+  println(s"${BOLD}Welcome to the Steam Player Data Analyzer, where the top 100 Steam Games from 2012-2021 are queried!$RESET\n")
+
+  var isAdmin = false; var isBasic = false; var currentUN = ""; var currentPW = ""
 
 
-  //spark.sql("SELECT * FROM steamData").show()
-/*  val test = spark.sql("select MAX(peak_players) from steamdata where month_year = 'l 2021'")
-  if (test.head().anyNull) {
-    println("Invalid input")
-  }
-  else {
-    test.show()
-  }*/
-
-  //can save csv into a dataframe and use spark functions or perform spark sql queries using views.
-  /*val Bev_ConscountA=spark.read.csv("hdfs://localhost:9000/user/hive/warehouse/Bev_ConscountA.txt").toDF()
-  Bev_ConscountA.createOrReplaceTempView("ConsA")
-  spark.sql("SELECT * FROM ConsA").show()*/
 
 
 }
