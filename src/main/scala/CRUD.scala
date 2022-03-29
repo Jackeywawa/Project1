@@ -4,16 +4,29 @@ import scala.io.StdIn
 
 object CRUD extends App{
   //username STRING, password STRING, permissionType STRING
-  def createAccount(UN: String, PW: String, permission: String, spark: SparkSession) : Unit = {
+  def createAccountHidden(UN: String, PW: String, permission: String, spark: SparkSession) : Unit = {
     val checkIfUnique = spark.sql(s"select username from userAccounts where lower(username) = '${UN.toLowerCase}'")
     if (checkIfUnique.isEmpty) {
       spark.sql(s"insert into userAccounts VALUES ('$UN','$PW','$permission')")
-      if (permission == "basic")
-      println("Account created!")
     }
     else {
       val retryUN = StdIn.readLine(s"$UN has already been taken! Please enter another username:\n")
-      createAccount(retryUN, PW, permission, spark)
+      createAccountHidden(retryUN, PW, permission, spark)
+    }
+  }
+
+  def createAccount(permission: String, spark: SparkSession) : Unit = {
+    val UN = StdIn.readLine("Please enter a unique username:\n")
+    val checkIfUnique = spark.sql(s"select username from userAccounts where lower(username) = '${UN.toLowerCase}'")
+    if (checkIfUnique.isEmpty) {
+      val PW = StdIn.readLine("Please enter a strong password:\n")
+      spark.sql(s"insert into userAccounts VALUES ('$UN','$PW','$permission')")
+      if (permission == "basic")
+        println(s"Account $UN created!")
+    }
+    else {
+      println(s"$UN has already been taken!\n")
+      createAccount(permission, spark)
     }
   }
 
@@ -34,9 +47,10 @@ object CRUD extends App{
       spark.sql("alter table usersTemp rename to userAccounts")
       spark.sql(s"insert into table userAccounts VALUES ('$UN','$newPW','$permission')") //bug: will change UN to whatever was passed into function, shouldn't be an issue when using current username
       println(s"${BOLD}Password has been updated to $newPW!$RESET")
+      spark.sql(s"select * from userAccounts where lower(username) = '${UN.toLowerCase}'").show(false)
     }
     else {
-      println(s"$oldPW is incorrect! Please try again...\n")
+      println(s"$oldPW is incorrect!\n")
       updatePassword(UN, permission, spark)
     }
   }
@@ -58,19 +72,45 @@ object CRUD extends App{
       spark.sql("alter table usersTemp rename to userAccounts")
       spark.sql(s"insert into table userAccounts VALUES ('$newUN','$PW','$permission')")
       println(s"${BOLD}Username has been updated to $newUN!$RESET")
+      spark.sql(s"select * from userAccounts where lower(username) = '${newUN.toLowerCase}'").show(false)
+      def setUsername (oldUser: String, newUser: String) : Unit = {
+        val oldUser = newUser
+      }
+      setUsername(UN, newUN)
     }
     else {
-      println(s"$PW is incorrect! Please try again...\n")
+      println(s"$PW is incorrect!\n")
       updateUserName(UN, permission, spark)
     }
   }
 
+  def updatePrivilege(permission: String, spark: SparkSession) : Unit = {
+    readAccounts(spark)
+    var UN = StdIn.readLine("Please enter a valid username: \n")
+    var checkIfUnique = spark.sql(s"select username from userAccounts where lower(username) = '${UN.toLowerCase}'")
+    var getPW = spark.sql(s"select password from userAccounts where lower(username) = '${UN.toLowerCase}'")
+    var PW = getPW.head().getString(0)
+    while (checkIfUnique.isEmpty) {
+      UN = StdIn.readLine(s"$UN doesn't exist! Please enter a valid username:\n")
+      checkIfUnique = spark.sql(s"select username from userAccounts where lower(username) = '${UN.toLowerCase}'")
+      getPW = spark.sql(s"select password from userAccounts where lower(username) = '${UN.toLowerCase}'")
+      PW = getPW.head().getString(0)
+    }
+    createUserAccountsCopy(spark)
+    spark.sql(s"insert into usersTemp select * from userAccounts where lower(username) != '${UN.toLowerCase}'")
+    spark.sql("drop table userAccounts")
+    spark.sql("alter table usersTemp rename to userAccounts")
+    spark.sql(s"insert into table userAccounts VALUES ('$UN','$PW','$permission')")
+    println(s"${BOLD}$UN has been updated to $permission status!$RESET")
+    spark.sql(s"select * from userAccounts where lower(username) = '${UN.toLowerCase}'").show(false)
+  }
+
   def deleteUser(spark: SparkSession) : Unit = {
     readAccounts(spark)
-    var UN = StdIn.readLine("Please enter the user you wish to delete: \n")
+    var UN = StdIn.readLine("Please enter the user you wish to delete:\n")
     var checkIfExist = spark.sql(s"select username from userAccounts where lower(username) = '${UN.toLowerCase}'")
     while (checkIfExist.isEmpty) {
-      UN = StdIn.readLine(s"$UN does not exist! Please enter another username: \n")
+      UN = StdIn.readLine(s"$UN does not exist! Please enter another username:\n")
       checkIfExist = spark.sql(s"select username from userAccounts where lower(username) = '${UN.toLowerCase}'")
     }
     createUserAccountsCopy(spark)
@@ -78,6 +118,7 @@ object CRUD extends App{
     spark.sql("drop table userAccounts")
     spark.sql("alter table usersTemp rename to userAccounts")
     println(s"${BOLD}$UN has been deleted successfully!$RESET")
+    readAccounts(spark)
   }
 
   def createUserAccountsCopy(spark: SparkSession, table_name : String = "usersTemp") : Unit = {

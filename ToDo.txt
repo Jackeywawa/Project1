@@ -1,0 +1,2 @@
+- Bold/Underline text when appropriate (welcome message, table titles, etc)
+- Log out admin user if they delete themselves.
