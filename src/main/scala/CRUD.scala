@@ -3,7 +3,6 @@ import scala.Console._
 import scala.io.StdIn
 
 object CRUD extends App{
-  //username STRING, password STRING, permissionType STRING
   def createAccountHidden(UN: String, PW: String, permission: String, spark: SparkSession) : Unit = {
     val checkIfUnique = spark.sql(s"select username from userAccounts where lower(username) = '${UN.toLowerCase}'")
     if (checkIfUnique.isEmpty) {
@@ -125,22 +124,4 @@ object CRUD extends App{
     spark.sql(s"create table if not exists $table_name(username STRING, password STRING, permissionType STRING)" +
       s"stored as orc")
   }
-
-  //obsolete functions
-  /*  def updatePassword(UN: String, oldPW: String, permission: String, spark: SparkSession) : Unit = {
-    val checkPW = spark.sql(s"select password from userAccounts " +
-      s"where username = '$UN' and password = '$oldPW'")
-    if (!checkPW.isEmpty) {
-      val newPW = StdIn.readLine("Please enter a new password: \n")
-      createUserAccountsCopy(spark)
-      spark.sql(s"insert into userTemps select * from userAccounts where username != '$UN'")
-      spark.sql("drop table userAccounts")
-      spark.sql("alter table userTemps rename to userAccounts")
-      spark.sql(s"insert into table userAccounts VALUES ('$UN','$newPW','$permission')")
-    }
-    else {
-      val retryPW = StdIn.readLine(s"$oldPW is incorrect! Please try again...\n")
-      updatePassword(UN, retryPW, permission, spark)
-    }
-  }*/
 }

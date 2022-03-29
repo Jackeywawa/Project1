@@ -1,10 +1,8 @@
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
-
 import scala.Console._
 import queries._
 import CRUD._
-
 import scala.io.StdIn
 import scala.util.control.Breaks._
 
@@ -47,7 +45,6 @@ object main extends App {
 
   //</editor-fold>
 
-  //var isAdmin = false; var isBasic = false; var currentUN = ""; var currentPW = ""; var input = "";
   var input1 = 0
   val menu1 =
     s"""
