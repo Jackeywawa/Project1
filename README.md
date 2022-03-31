@@ -1,4 +1,4 @@
-# Project1
+# Project 1: Steam Player Data Analyzer
 ## Project Description
 The 2nd solo project for Revature. This project allows users to fetch data from a local CSV file with Steam Player Data for the top 100 games on Steam from 2012-2021 and performing analytical queries using Spark's API in IntelliJ. It also includes a user-login system with BASIC and ADMIN users that each have their own set of privileges.
 
